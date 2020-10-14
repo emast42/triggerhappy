@@ -37,3 +37,4 @@ boolean paritygen(uint8_t bit_out, boolean _tap1, boolean _tap2, uint16_t _SRlen
 }
 
 
+

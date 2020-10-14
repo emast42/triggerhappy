@@ -5,8 +5,11 @@ plus interrupt code by "LEo" and "bikedude"
 #define ENC_A 2 //encoder pins
 #define ENC_B 3
 #define ENC_PORT PIND
+// use this if encoder is not debounced using 0.1uF capacitors:
+// makes encoder less jumpy by waiting for 2 clicks in same direction!  
+#define ENC_THRESHOLD 2
 
-int encoderCounter = 1; //variable for smoothing encoder response, change to 2 if no debouncing caps are used on the PCB.
+int encoderCounter = 2; //variable for smoothing encoder response, change to 2 if no debouncing caps are used on the PCB.
 static int enc_states[] = { 0,-1,1,0,1,0,0,-1,-1,0,0,1,0,1,-1,0 };
 
 void setupEncoder()
@@ -19,30 +22,28 @@ void setupEncoder()
 
   // encoder pin on interrupt 0 (pin 2)
   // default (software debounce):
-  // attachInterrupt(0, doEncoder, RISING);
-  // makrospex:
   attachInterrupt(0, doEncoder, CHANGE);
+  // makrospex:
+  //attachInterrupt(0, doEncoder, CHANGE);
+  
   // makrospex end
   // encoder pin on interrupt 1 (pin 3)
   // default:
-  // attachInterrupt(1, doEncoder, RISING);
-  // makrospex:
   attachInterrupt(1, doEncoder, CHANGE);
+  // makrospex:
+  //attachInterrupt(1, doEncoder, CHANGE);
   // makrospex end
 }
 
 void doEncoder()
 {
   encoderCounter = encoderCounter + read_encoder(); 
-  if (encoderCounter > 1) {
-  // use this if encoder is not debounced using 0.1uF capacitors:
-  // makes encoder less jumpy by waiting for 2 clicks in same direction!
-  // if (encoderCounter > 2) {
+ 
+  if (encoderCounter > ENC_THRESHOLD) {
     tmpdata = 1;
     encoderCounter = 0;
   }
-  if (encoderCounter < -1) {
-  // if (encoderCounter < -2) {
+  if (encoderCounter < -ENC_THRESHOLD) {
     tmpdata = -1;
     encoderCounter = 0;
   }
@@ -60,4 +61,5 @@ int8_t read_encoder()
   old_AB |= (new_AB & 0x03); //add current state
   return ( enc_states[( old_AB & 0x0f )]);
 }
+
 

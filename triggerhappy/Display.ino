@@ -82,7 +82,7 @@ void displayLED(String ledMessage)
     ledMessage.toUpperCase();
     ledMessage = "    "+ledMessage;
     ledMessage = ledMessage.substring(ledMessage.length()-4);
-    Serial.println("message: -"+ledMessage+"-");
+    //Serial.println("message: -"+ledMessage+"-");
 
     uint8_t data[] = {0x00, 0x00, 0x00, 0x00};
     for (int i = 3; i>=0; i--) {
@@ -99,6 +99,7 @@ void displayLED(String ledMessage)
 #endif
   }
 }
+
 
 
 
