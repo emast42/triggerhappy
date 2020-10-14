@@ -1,0 +1,4 @@
+v1.05 -> v1.06
+- added support for TM1637 based display boards (that have 4 digits)
+- bug fix for saving and loading. EEPROM supports 1024 bytes max (Uno) and thus will only 10 presets fit in memory. Introduction of const int saveSlotMax that contains last selectable preset no. 
+- added turnaround for preset save and load number. Going up from saveSlotMax (9) will select 0 instead of staying at 9 and going down from 0 will select saveSlotMax (9) instead of staying at 0

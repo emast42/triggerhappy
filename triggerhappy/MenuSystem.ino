@@ -28,7 +28,8 @@ void doUpdates() //handles encoder input and display for menu system
     case 1: //Adjust Rate Main
       // new code (makrospex)
       if (clockInternal) {
-        if (iBPM > 0) {
+        //EM
+        if ((iBPM > 1)&&(iBPM<500)) {
           iBPM = iBPM + tmpdata;
         }
         else {
@@ -222,9 +223,10 @@ void doUpdates() //handles encoder input and display for menu system
     break;
     
     case 15: //Save settings
+      //EM: 99->saveSlotMax
       saveSlot = saveSlot + tmpdata;
-      if (saveSlot < 0) saveSlot = 0;
-      if (saveSlot > 99) saveSlot = 99;
+      if (saveSlot < 0) saveSlot = saveSlotMax;
+      if (saveSlot > saveSlotMax) saveSlot = 0;
       if (saveSlot > 9) tempString = "S-";
       else tempString = "S--";
       tempString += saveSlot;
@@ -233,8 +235,9 @@ void doUpdates() //handles encoder input and display for menu system
     
     case 16: //Load settings
       saveSlot = saveSlot + tmpdata;
-      if (saveSlot < 0) saveSlot = 0;
-      if (saveSlot > 99) saveSlot = 99;
+      //EM: 99->saveSlotMax
+      if (saveSlot < 0) saveSlot = saveSlotMax;
+      if (saveSlot > saveSlotMax) saveSlot = 0;
       if (saveSlot > 9) tempString = "L-";
       else tempString = "L--";
       tempString += saveSlot;

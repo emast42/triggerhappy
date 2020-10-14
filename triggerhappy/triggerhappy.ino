@@ -1,4 +1,3 @@
-
 //triggerhappy by Karl Gruenewald (studiokpg@gmail.com)
 /*Trigger generator for modular synthesizers.
  Uses internal or external clock
@@ -96,17 +95,21 @@ boolean clickTables[16][16] = {
   }
   ,//13
   {
-    1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0
+    //1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0
+    0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0 //tom ITAT
   }
   ,//14
   {
-    1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0
+    //1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 0 //open ITAT
+    1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0
   }
   ,//15
   {
-    1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0
+  //  1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0
+    0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1 //bassdrum ITAT 
   } //16
 };
+
 
 
 
@@ -192,6 +195,11 @@ const int saveButtonPin = A5; //enter save/read mode
 // const int buttonThreshold = 400;// now local
 int saveRead = 255;
 boolean saveButton = false;
+
+//EM: added for convenience
+const int slotSize = 100;
+const int saveSlotMax = 9; //max slot# that can be saved to
+
 int saveSlot = 0; // was int
 // const int saveDebounce = 500;
 unsigned long lastSave = 0;
@@ -231,12 +239,12 @@ extern int encoderMode; //for menu system (was int)
 
 volatile int tmpdata = 0; //variable to pass encoder value
 
-const int txPin = 5;  // serial output pin
+/* const int txPin = 5;  // serial output pin
 const int rxPin = 4;  // unused, but SoftwareSerial needs it...
 
 
 SoftwareSerial mySerial =  SoftwareSerial(rxPin, txPin);
-
+*/
 void setup() {
   delay(100);
   Serial.begin(9600);
@@ -248,7 +256,7 @@ void setup() {
   digitalWrite(buttonPin, HIGH);
   initParams();// initializes outParams array
   //IMPORTANT: comment out the following line first time you run this sketch!
-  //  loadSettings(); //loads from save location 0 on startup (will load garbage until you do a save to slot 0!)
+  //loadSettings(); //loads from save location 0 on startup (will load garbage until you do a save to slot 0!)
   pinMode(clockPin, INPUT);
   pinMode(saveButtonPin, INPUT);
   digitalWrite(saveButtonPin, HIGH);
@@ -260,6 +268,11 @@ void setup() {
   rateMain = 250;
   iBPM = 60;
   BPM = "60";
+  
+  //EM moved here because of overwriting bpm
+  //IMPORTANT: comment out the following line first time you run this sketch!
+  loadSettings(); //loads from save location 0 on startup (will load garbage until you do a save to slot 0!)
+  
   nowTime = millis();
   readSwitch(); // Read int/ext switch setting at startup
 }
@@ -309,7 +322,7 @@ void loop() {
       if (encoderMode == 1) {
         // makrospex;
         if (nowTime >= (lastBPMupdate + 250) && encoderMode == 1) {
-          if (iBPM > 0) {
+          if ((iBPM > 1)&&(iBPM<500)) {
             rateMain = (int)(((60.0 / (float)iBPM) * 250.0) + 0.5);
             BPM = String(iBPM);
           }
@@ -722,7 +735,8 @@ void initParams() { //sets some default values for outParam
 ///////////////////////////
 
 void saveSettings() { //will overwrite settings in EEPROM without warning!
-  int slotByte = (saveSlot * 98); // paramaters to save, slotByte is first address per set
+  //EM: 98-> slotSize
+  int slotByte = (saveSlot * slotSize); // paramaters to save, slotByte is first address per set
   int slotCounter = 0;
   cli(); // disable interrupts
   for (int i = 0; i < 6; i++) {
@@ -737,16 +751,26 @@ void saveSettings() { //will overwrite settings in EEPROM without warning!
     eeprom_write_byte((uint8_t*)(slotByte + slotCounter), swing);
   }
   slotCounter ++;
-  int tempRate = (rateMain > 255) ? 255 : rateMain; //can't store more than 1 byte per EEPROM slot
+  //EM: int tempRate = (rateMain > 255) ? 255 : rateMain; //can't store more than 1 byte per EEPROM slot
+  byte tempRate = rateMain; //new code
   if (eeprom_read_byte((uint8_t*)(slotByte + slotCounter)) != tempRate) {
     eeprom_write_byte((uint8_t*)(slotByte + slotCounter), tempRate);
   }
+  
+  //EM
+  slotCounter ++;
+  tempRate = rateMain>>8; //new code
+  if (eeprom_read_byte((uint8_t*)(slotByte + slotCounter)) != tempRate) {
+    eeprom_write_byte((uint8_t*)(slotByte + slotCounter), tempRate);
+  }
+  //EM
   sei(); // re-enable interrupts
 }
 
 
 void loadSettings() {
-  int slotByte = (saveSlot * 98); // paramaters to save, slotByte is first address per set
+  //EM: 98-> slotSize
+  int slotByte = (saveSlot * slotSize); // paramaters to save, slotByte is first address per set
   int slotCounter = 0;
   int rateMainOld = 0;
   cli(); // disable interrupts
@@ -760,6 +784,10 @@ void loadSettings() {
   slotCounter ++;
   rateMainOld = rateMain;
   rateMain = eeprom_read_byte((uint8_t*)(slotByte + slotCounter));
+  //EM: extra code
+  slotCounter ++;
+  rateMain += (eeprom_read_byte((uint8_t*)(slotByte + slotCounter))<<8);
+  //
   sei(); // enable interrupts
   if (rateMain != rateMainOld) {
     iBPM = (int)(15000 / rateMain);
